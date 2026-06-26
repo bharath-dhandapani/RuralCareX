@@ -884,6 +884,15 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('missed-call', (data) => {
+    // data: { doctorId, patientName }
+    const docSocketId = doctorSockets.get(data.doctorId.toString());
+    if (docSocketId) {
+      io.to(docSocketId).emit('missed-call', data);
+      console.log(`Routing missed call notification to Doctor ${data.doctorId}`);
+    }
+  });
+
   socket.on('join-room', (roomId) => {
     socket.join(roomId);
     socket.to(roomId).emit('user-connected', socket.id);

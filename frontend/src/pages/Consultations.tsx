@@ -20,10 +20,15 @@ const Consultations = () => {
   const [afternoon, setAfternoon] = useState('');
   const [night, setNight] = useState('');
   const [days, setDays] = useState('');
+  const [bookingDoctorId, setBookingDoctorId] = useState(null);
+  const [bookingDate, setBookingDate] = useState('');
+  const [bookingTime, setBookingTime] = useState('');
+
   const [inCall, setInCall] = useState(false);
   const [roomId, setRoomId] = useState('');
   const roomRef = useRef('');
   const hasJoined = useRef(false);
+  const callTimeoutRef = useRef(null);
   
   // Chat States
   const [messages, setMessages] = useState([]);
@@ -145,19 +150,25 @@ const Consultations = () => {
     }
   }, [messages]);
 
-  const handleBookAppointment = async (doctorId) => {
+  const handleBookAppointment = async (e) => {
+    e.preventDefault();
+    if (!bookingDate || !bookingTime) {
+      alert("Please select a date and time.");
+      return;
+    }
     const token = localStorage.getItem('token');
     const userId = parseInt(localStorage.getItem('userId')) || 1;
-    // In real app, we'd extract userId from token or localStorage
     try {
+      const dateTimeIso = new Date(`${bookingDate}T${bookingTime}`).toISOString();
       const res = await fetch(`${API_URL}/api/appointments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, doctorId, date: new Date(Date.now() + 86400000).toISOString() }) // tomorrow
+        body: JSON.stringify({ userId, doctorId: bookingDoctorId, date: dateTimeIso })
       });
       const data = await res.json();
       if (data.success) {
         alert('Appointment requested successfully!');
+        setBookingDoctorId(null);
         navigate('/records');
       }
     } catch (err) {
@@ -191,6 +202,18 @@ const Consultations = () => {
       const pc = new RTCPeerConnection(configuration);
       peerConnectionRef.current = pc;
 
+      // Timeout for Patient (120 seconds)
+      if (!isRoomName && localStorage.getItem('role') !== 'doctor') {
+        callTimeoutRef.current = setTimeout(() => {
+          if (peerConnectionRef.current?.iceConnectionState !== 'connected' && peerConnectionRef.current?.connectionState !== 'connected') {
+            endCall();
+            const patientName = localStorage.getItem('name') || 'A Patient';
+            socket.emit('missed-call', { doctorId: idToCall, patientName });
+            alert("The doctor is currently unavailable. Please try again later or book an appointment.");
+          }
+        }, 120000);
+      }
+
       stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
       pc.ontrack = (event) => {
@@ -203,6 +226,12 @@ const Consultations = () => {
 
       pc.oniceconnectionstatechange = () => {
         setDebugStatus(`Connection state: ${pc.iceConnectionState}`);
+        if (pc.iceConnectionState === 'connected') {
+          if (callTimeoutRef.current) {
+            clearTimeout(callTimeoutRef.current);
+            callTimeoutRef.current = null;
+          }
+        }
       };
 
       pc.onicecandidate = (event) => {
@@ -230,6 +259,10 @@ const Consultations = () => {
   };
 
   const endCall = () => {
+    if (callTimeoutRef.current) {
+      clearTimeout(callTimeoutRef.current);
+      callTimeoutRef.current = null;
+    }
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(track => track.stop());
     }
@@ -451,13 +484,42 @@ const Consultations = () => {
                 <button 
                   className="btn-secondary" 
                   style={{ flex: 1, padding: '10px', minWidth: '120px' }} 
-                  onClick={() => handleBookAppointment(doc.id)}
+                  onClick={() => setBookingDoctorId(doc.id)}
                 >
                   {'Book Appointment'}
                 </button>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Appointment Booking Modal */}
+      {bookingDoctorId && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+          <div className="glass animate-slide-up" style={{ width: '100%', maxWidth: '400px', padding: '24px' }}>
+            <h3 style={{ color: 'white', marginTop: 0 }}>Select Date & Time</h3>
+            <form onSubmit={handleBookAppointment} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', color: 'var(--text-secondary)', marginBottom: '8px' }}>Date</label>
+                <input 
+                  type="date" required value={bookingDate} onChange={e => setBookingDate(e.target.value)}
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', colorScheme: 'dark' }} 
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', color: 'var(--text-secondary)', marginBottom: '8px' }}>Time</label>
+                <input 
+                  type="time" required value={bookingTime} onChange={e => setBookingTime(e.target.value)}
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', colorScheme: 'dark' }} 
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+                <button type="button" onClick={() => setBookingDoctorId(null)} className="btn-secondary" style={{ flex: 1, padding: '12px', background: 'rgba(255,255,255,0.1)' }}>Cancel</button>
+                <button type="submit" className="btn-primary" style={{ flex: 1, padding: '12px', background: 'var(--secondary)' }}>Confirm</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

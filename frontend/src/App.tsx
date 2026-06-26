@@ -58,10 +58,18 @@ function Layout({ children }: { children: React.ReactNode }) {
       setIncomingCall(data);
     };
 
+    const handleMissedCall = (data: { patientName: string }) => {
+      setIncomingCall(null);
+      alert(`Missed instant call from patient: ${data.patientName}`);
+    };
+
     socket.on('incoming-call', handleIncomingCall);
+    socket.on('missed-call', handleMissedCall);
+
     return () => {
       socket.off('connect', registerDoctor);
       socket.off('incoming-call', handleIncomingCall);
+      socket.off('missed-call', handleMissedCall);
     };
   }, []);
 
