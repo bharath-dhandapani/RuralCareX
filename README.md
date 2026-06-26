@@ -18,7 +18,6 @@ RuralCareX is a comprehensive telemedicine and healthcare management platform de
 - **Database ORM:** Prisma
 - **Database:** PostgreSQL (Hosted on Supabase)
 - **AI Integration:** Google Gemini API
-- **SMS/OTP:** Twilio
 
 ## 🚀 Local Development Setup
 
