@@ -706,12 +706,21 @@ app.post('/api/pharmacy/dispense-prescription', async (req, res) => {
 
 app.get('/api/medicines/search', async (req, res) => {
   const query = req.query.q || '';
-  if (!query) return res.status(200).json({ success: true, results: [] });
+  if (!query) {
+    const medicines = await prisma.medicine.findMany({
+      where: { stock: { gt: 0 } },
+      include: { pharmacy: { select: { name: true, address: true, phone: true } } },
+      orderBy: { stock: 'desc' },
+      take: 20
+    });
+    return res.status(200).json({ success: true, results: medicines });
+  }
 
   const medicines = await prisma.medicine.findMany({
     where: {
       name: {
-        contains: query
+        contains: query,
+        mode: 'insensitive'
       },
       stock: {
         gt: 0
@@ -721,7 +730,8 @@ app.get('/api/medicines/search', async (req, res) => {
       pharmacy: {
         select: { name: true, address: true, phone: true }
       }
-    }
+    },
+    orderBy: { stock: 'desc' }
   });
   res.status(200).json({ success: true, results: medicines });
 });

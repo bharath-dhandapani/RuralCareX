@@ -26,11 +26,28 @@ const Dashboard = () => {
         }
       }
     };
+
+    const fetchInitialPharmacies = async () => {
+      setIsSearching(true);
+      try {
+        const res = await fetch(`${API_URL}/api/medicines/search`);
+        const data = await res.json();
+        if (data.success) {
+          setPharmacies(data.results);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
     fetchProfile();
+    fetchInitialPharmacies();
   }, [API_URL]);
 
   const handleSearch = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
     if (!medicineQuery) {
       setPharmacies([]);
       return;
@@ -135,7 +152,7 @@ const Dashboard = () => {
         </form>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {isSearching && <p style={{ color: 'var(--text-secondary)' }}>{'Searching'}</p>}
+          {isSearching && <p style={{ color: 'var(--text-secondary)' }}>{'Searching...'}</p>}
           {!isSearching && pharmacies.length === 0 && medicineQuery && (
             <p style={{ color: 'var(--text-secondary)' }}>{'No Stock'}</p>
           )}
@@ -158,19 +175,6 @@ const Dashboard = () => {
               </a>
             </div>
           ))}
-
-          {!medicineQuery && (
-            <div className="glass" style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{ background: 'var(--surface-border)', padding: '12px', borderRadius: '12px' }}>
-                <Pill size={24} color="var(--text-primary)" />
-              </div>
-              <div style={{ flex: 1 }}>
-                <h4 style={{ margin: 0, fontSize: '0.9rem' }}>Nabha City Chemist</h4>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px' }}>General Store</p>
-              </div>
-              <ChevronRight size={20} color="var(--text-secondary)" />
-            </div>
-          )}
         </div>
       </div>
 
