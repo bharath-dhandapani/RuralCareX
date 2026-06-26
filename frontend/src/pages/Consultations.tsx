@@ -289,17 +289,30 @@ const Consultations = () => {
   const toggleCamera = async () => {
     if (!localStreamRef.current || !peerConnectionRef.current) return;
     
-    const newMode = facingMode === 'user' ? 'environment' : 'user';
-    setFacingMode(newMode);
-    
     try {
+      setDebugStatus("Switching camera...");
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(d => d.kind === 'videoinput');
+      
+      if (videoDevices.length <= 1) {
+        setDebugStatus("Only one camera detected.");
+        return;
+      }
+      
+      const oldVideoTrack = localStreamRef.current.getVideoTracks()[0];
+      const currentDeviceId = oldVideoTrack?.getSettings()?.deviceId;
+      
+      // Find next camera device
+      let nextDeviceIndex = videoDevices.findIndex(d => d.deviceId === currentDeviceId) + 1;
+      if (nextDeviceIndex >= videoDevices.length) nextDeviceIndex = 0;
+      const nextDevice = videoDevices[nextDeviceIndex];
+      
       // Get new stream
       const newStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: newMode }
+        video: { deviceId: { exact: nextDevice.deviceId } }
       });
       
       const newVideoTrack = newStream.getVideoTracks()[0];
-      const oldVideoTrack = localStreamRef.current.getVideoTracks()[0];
       
       if (oldVideoTrack) {
         oldVideoTrack.stop();
@@ -309,16 +322,20 @@ const Consultations = () => {
       localStreamRef.current.addTrack(newVideoTrack);
       
       if (localVideoRef.current) {
+        localVideoRef.current.srcObject = null;
         localVideoRef.current.srcObject = localStreamRef.current;
+        localVideoRef.current.play().catch(e => console.error("Play error:", e));
       }
       
-      const sender = peerConnectionRef.current.getSenders().find(s => s.track.kind === 'video');
+      const sender = peerConnectionRef.current.getSenders().find(s => s.track?.kind === 'video');
       if (sender) {
-        sender.replaceTrack(newVideoTrack);
+        await sender.replaceTrack(newVideoTrack);
       }
+      
+      setDebugStatus("Camera switched.");
     } catch (err) {
       console.error("Failed to switch camera:", err);
-      alert("Could not switch camera.");
+      setDebugStatus("Could not switch camera.");
     }
   };
 
@@ -483,8 +500,6 @@ const Consultations = () => {
             </button>
           </form>
         </div>
-        </>
-        )}
       </div>
     );
   }
