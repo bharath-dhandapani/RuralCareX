@@ -517,13 +517,16 @@ app.post('/api/doctor/consultation/complete', async (req, res) => {
   try {
     const doctor = await prisma.doctor.findUnique({ where: { id: parseInt(doctorId) } });
     
+    const now = new Date(); // Use identical timestamp for strict matching
+
     // Create Record (Consultation Notes)
     const record = await prisma.record.create({
       data: {
         userId: parseInt(patientId),
         type: 'Video Consultation',
         doctor: doctor.name,
-        notes: notes || 'Consultation completed successfully.'
+        notes: notes || 'Consultation completed successfully.',
+        date: now
       }
     });
 
@@ -538,6 +541,7 @@ app.post('/api/doctor/consultation/complete', async (req, res) => {
           afternoon: parseInt(afternoon) || 0,
           night: parseInt(night) || 0,
           days: parseInt(days) || 1,
+          date: now
         }
       });
     }

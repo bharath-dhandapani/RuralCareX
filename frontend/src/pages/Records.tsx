@@ -99,12 +99,12 @@ const Records = () => {
     if (record.appointmentId) {
       relatedPrescriptions = prescriptions.filter(p => p.appointmentId === record.appointmentId);
     } else {
-      // Fallback for instant consultations: match exactly closely in time (within 5 seconds)
+      // Fallback for instant consultations: match exactly closely in time (within 1000ms)
       const recordTime = new Date(record.date).getTime();
       relatedPrescriptions = prescriptions.filter(p => {
         if (p.appointmentId) return false; // If prescription belongs to an appointment, it's not from an instant call
         const pTime = new Date(p.date).getTime();
-        return Math.abs(pTime - recordTime) < 5000;
+        return Math.abs(pTime - recordTime) < 1000;
       });
     }
     
