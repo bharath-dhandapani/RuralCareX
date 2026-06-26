@@ -343,9 +343,11 @@ const Consultations = () => {
           </div>
         )}
 
-        {/* Local Video PIP */}
-        <video ref={localVideoRef} autoPlay playsInline muted style={{ 
-          position: 'absolute', top: '80px', right: '20px', 
+        {!showPostCallModal && (
+          <>
+            {/* Local Video PIP */}
+            <video ref={localVideoRef} autoPlay playsInline muted style={{ 
+              position: 'absolute', top: '80px', right: '20px', 
           width: '90px', height: '130px', objectFit: 'cover', 
           borderRadius: '12px', border: '2px solid white', zIndex: 10,
           boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
@@ -401,6 +403,8 @@ const Consultations = () => {
             </button>
           </form>
         </div>
+        </>
+        )}
       </div>
     );
   }
