@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Activity, Search, Calendar, User, Video, LogOut, CheckCircle, Clock } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { socket } from '../socket';
 
 const DoctorDashboard = () => {
@@ -9,7 +9,8 @@ const DoctorDashboard = () => {
   const API_URL = import.meta.env.VITE_API_URL || 'https://ruralcarex.onrender.com';
 
   const [isAvailable, setIsAvailable] = useState(false);
-  const [patientSearch, setPatientSearch] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [patientSearch, setPatientSearch] = useState(searchParams.get('searchPatientId') || '');
   const [patientData, setPatientData] = useState(null);
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +41,33 @@ const DoctorDashboard = () => {
 
     return () => socket.off('connect', registerDoc);
   }, []);
+
+  useEffect(() => {
+    const autoSearchId = searchParams.get('searchPatientId');
+    if (autoSearchId) {
+      setPatientSearch(autoSearchId);
+      performSearch(autoSearchId);
+      searchParams.delete('searchPatientId');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, []);
+
+  const performSearch = async (id) => {
+    if (!id) return;
+    try {
+      const res = await fetch(`${API_URL}/api/doctor/patient/${id}`);
+      const data = await res.json();
+      if (data.success) {
+        setPatientData(data);
+      } else {
+        alert(data.message || 'Patient not found');
+        setPatientData(null);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error finding patient');
+    }
+  };
 
   const fetchDoctorProfile = async () => {
     try {
@@ -87,21 +115,9 @@ const DoctorDashboard = () => {
     }
   };
 
-  const handleSearchPatient = async (e) => {
+  const handleSearchPatient = (e) => {
     e.preventDefault();
-    if (!patientSearch) return;
-    try {
-      const res = await fetch(`${API_URL}/api/doctor/patient/${patientSearch}`);
-      const data = await res.json();
-      if (data.success) {
-        setPatientData(data);
-      } else {
-        alert('Patient not found');
-        setPatientData(null);
-      }
-    } catch (err) {
-      console.error(err);
-    }
+    performSearch(patientSearch);
   };
 
   const handlePrescribe = async (e, aptId = null, patientId = null) => {

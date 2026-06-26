@@ -357,7 +357,7 @@ const Consultations = () => {
         setShowPostCallModal(false);
         setInCall(false);
         setRoomId('');
-        navigate('/doctor/dashboard', { replace: true });
+        navigate(`/doctor/dashboard${urlPatientId && urlPatientId !== 'undefined' ? `?searchPatientId=${urlPatientId}` : ''}`, { replace: true });
       } else {
         alert(data.message || 'Failed to save consultation');
       }
@@ -419,7 +419,10 @@ const Consultations = () => {
                   style={{ width: '100%', padding: '14px', borderRadius: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '1rem' }}
                 />
               </div>
-              <button type="submit" className="btn-primary" style={{ background: 'var(--secondary)', marginTop: '12px', padding: '16px', fontSize: '1.1rem', fontWeight: 600, borderRadius: '12px' }}>Save & Complete Record</button>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                <button type="button" onClick={() => { setShowPostCallModal(false); setInCall(false); setRoomId(''); navigate('/doctor/dashboard', { replace: true }); }} className="btn-secondary" style={{ flex: 1, padding: '16px', fontSize: '1.1rem', fontWeight: 600, borderRadius: '12px' }}>Skip & Close</button>
+                <button type="submit" className="btn-primary" style={{ flex: 2, background: 'var(--secondary)', padding: '16px', fontSize: '1.1rem', fontWeight: 600, borderRadius: '12px' }}>Save & Complete Record</button>
+              </div>
             </form>
           </div>
         </div>

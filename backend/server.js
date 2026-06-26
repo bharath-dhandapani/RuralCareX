@@ -514,6 +514,11 @@ app.post('/api/doctor/prescribe', async (req, res) => {
 // Doctor completes instant consultation with notes & prescription
 app.post('/api/doctor/consultation/complete', async (req, res) => {
   const { doctorId, patientId, notes, medicineName, morning, afternoon, night, days } = req.body;
+  
+  if (!patientId || patientId === 'undefined' || patientId === 'null' || isNaN(parseInt(patientId))) {
+    return res.status(400).json({ success: false, message: 'Invalid or missing Patient ID. The patient may be using an outdated version of the app. Please skip saving this record.' });
+  }
+
   try {
     const doctor = await prisma.doctor.findUnique({ where: { id: parseInt(doctorId) } });
     
