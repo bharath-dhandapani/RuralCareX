@@ -1,13 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Activity, Pill, ShieldAlert, ChevronRight, PhoneCall, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-    const [medicineQuery, setMedicineQuery] = useState('');
+  const [medicineQuery, setMedicineQuery] = useState('');
   const [pharmacies, setPharmacies] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
   const API_URL = import.meta.env.VITE_API_URL || 'https://ruralcarex.onrender.com';
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const role = localStorage.getItem('role');
+      const userId = localStorage.getItem('userId');
+      if (role && userId) {
+        try {
+          const res = await fetch(`${API_URL}/api/profile/${role}/${userId}`);
+          const data = await res.json();
+          if (data.success) {
+            setProfile(data.profile);
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    };
+    fetchProfile();
+  }, [API_URL]);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -35,8 +55,8 @@ const Dashboard = () => {
       {/* Header */}
       <header className="animate-slide-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>{'Hello'}, Gurpreet 👋</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '4px' }}>Nabha Village</p>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>{'Hello'}, {profile?.name || 'User'} 👋</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '4px' }}>{profile?.address || 'Nabha Village'}</p>
         </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <button onClick={() => {
@@ -48,9 +68,13 @@ const Dashboard = () => {
           <div style={{
             width: '40px', height: '40px', borderRadius: '50%', 
             background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer'
+            fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', overflow: 'hidden'
           }} onClick={() => navigate('/profile')}>
-            G
+            {profile?.photo ? (
+              <img src={profile.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              profile?.name ? profile.name.charAt(0).toUpperCase() : 'U'
+            )}
           </div>
         </div>
       </header>
