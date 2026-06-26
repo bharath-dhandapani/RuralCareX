@@ -12,8 +12,8 @@ model User {
   id        Int      @id @default(autoincrement())
   phone     String   @unique
   name      String?
-  password    String?
-  email       String?
+  password  String
+  email     String?
   address     String?
   photo       String?
   age         Int?
@@ -30,7 +30,7 @@ model Doctor {
   available Boolean  @default(false)
   phone     String?  @unique
   email     String?  @unique
-  password  String?
+  password  String
   address   String?
   photo     String?
 }
