@@ -154,6 +154,7 @@ function App() {
           <Route path="/medicines" element={<ProtectedRoute allowedRole="patient"><Medicines /></ProtectedRoute>} />
           
           <Route path="/doctor/dashboard" element={<ProtectedRoute allowedRole="doctor"><DoctorDashboard /></ProtectedRoute>} />
+          <Route path="/doctor/call" element={<ProtectedRoute allowedRole="doctor"><Consultations /></ProtectedRoute>} />
           
           <Route path="/pharmacy/dashboard" element={<ProtectedRoute allowedRole="pharmacy"><PharmacyDashboard /></ProtectedRoute>} />
         </Routes>

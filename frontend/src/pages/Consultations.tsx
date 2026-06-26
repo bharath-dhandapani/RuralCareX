@@ -10,7 +10,7 @@ const Consultations = () => {
   const navigate = useNavigate();
   const location = useLocation();
     const queryParams = new URLSearchParams(location.search);
-  const urlRoom = queryParams.get('Room');
+  const urlRoom = queryParams.get('Room') || queryParams.get('room');
 
   const [doctors, setDoctors] = useState([]);
   const [inCall, setInCall] = useState(false);

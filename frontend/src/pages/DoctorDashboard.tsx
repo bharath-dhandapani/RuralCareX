@@ -372,7 +372,7 @@ const DoctorDashboard = () => {
               )}
               {apt.status === 'confirmed' && completingAptId !== apt.id && (
                 <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                  <button className="btn-primary" style={{ flex: 1, padding: '8px' }} onClick={() => navigate(`/consultations?room=apt_${apt.id}`)}>
+                  <button className="btn-primary" style={{ flex: 1, padding: '8px' }} onClick={() => navigate(`/doctor/call?room=apt_${apt.id}`)}>
                     <Video size={16} /> Start Call
                   </button>
                   <button className="btn-secondary" style={{ flex: 1, padding: '8px' }} onClick={() => { setCompletingAptId(apt.id); setCurrentNotes(''); }}>
