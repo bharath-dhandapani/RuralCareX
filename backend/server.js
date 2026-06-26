@@ -83,15 +83,20 @@ app.post('/api/auth/register', async (req, res) => {
   const { name, phone, password } = req.body;
   if (!phone || !password) return res.status(400).json({ success: false, message: 'Phone and password required' });
 
-  const existingUser = await prisma.user.findUnique({ where: { phone } });
-  if (existingUser) return res.status(400).json({ success: false, message: 'User already exists' });
+  try {
+    const existingUser = await prisma.user.findUnique({ where: { phone } });
+    if (existingUser) return res.status(400).json({ success: false, message: 'User already exists' });
 
-  const user = await prisma.user.create({
-    data: { name, phone, password }
-  });
+    const user = await prisma.user.create({
+      data: { name, phone, password }
+    });
 
-  const token = jwt.sign({ id: user.id, phone: user.phone, role: 'patient' }, JWT_SECRET, { expiresIn: '7d' });
-  res.status(200).json({ success: true, token, user });
+    const token = jwt.sign({ id: user.id, phone: user.phone, role: 'patient' }, JWT_SECRET, { expiresIn: '7d' });
+    res.status(200).json({ success: true, token, user });
+  } catch (err) {
+    console.error("Register Error:", err);
+    res.status(500).json({ success: false, message: 'Failed to register account' });
+  }
 });
 
 app.post('/api/auth/login', async (req, res) => {
@@ -120,12 +125,22 @@ app.post('/api/auth/doctor-register', async (req, res) => {
   const { name, specialty, phone, email, password } = req.body;
   if (!password || (!phone && !email)) return res.status(400).json({ success: false, message: 'Missing credentials' });
 
-  const doctor = await prisma.doctor.create({
-    data: { name, specialty, phone, email, password, rating: 5.0, available: false }
-  });
+  try {
+    const existingDoctor = await prisma.doctor.findFirst({
+      where: { OR: [{ phone }, { email }] }
+    });
+    if (existingDoctor) return res.status(400).json({ success: false, message: 'Doctor with this phone or email already exists' });
 
-  const token = jwt.sign({ id: doctor.id, role: 'doctor' }, JWT_SECRET, { expiresIn: '7d' });
-  res.status(200).json({ success: true, token, doctor });
+    const doctor = await prisma.doctor.create({
+      data: { name, specialty, phone, email, password, rating: 5.0, available: false }
+    });
+
+    const token = jwt.sign({ id: doctor.id, role: 'doctor' }, JWT_SECRET, { expiresIn: '7d' });
+    res.status(200).json({ success: true, token, doctor });
+  } catch (err) {
+    console.error("Doctor Register Error:", err);
+    res.status(500).json({ success: false, message: 'Failed to register doctor' });
+  }
 });
 
 app.post('/api/auth/doctor-login', async (req, res) => {
@@ -158,12 +173,22 @@ app.post('/api/auth/pharmacy-register', async (req, res) => {
   const { name, phone, email, password, address } = req.body;
   if (!password || (!phone && !email)) return res.status(400).json({ success: false, message: 'Missing credentials' });
 
-  const pharmacy = await prisma.pharmacy.create({
-    data: { name, phone, email, password, address }
-  });
+  try {
+    const existingPharmacy = await prisma.pharmacy.findFirst({
+      where: { OR: [{ phone }, { email }] }
+    });
+    if (existingPharmacy) return res.status(400).json({ success: false, message: 'Pharmacy with this phone or email already exists' });
 
-  const token = jwt.sign({ id: pharmacy.id, role: 'pharmacy' }, JWT_SECRET, { expiresIn: '7d' });
-  res.status(200).json({ success: true, token, pharmacy });
+    const pharmacy = await prisma.pharmacy.create({
+      data: { name, phone, email, password, address }
+    });
+
+    const token = jwt.sign({ id: pharmacy.id, role: 'pharmacy' }, JWT_SECRET, { expiresIn: '7d' });
+    res.status(200).json({ success: true, token, pharmacy });
+  } catch (err) {
+    console.error("Pharmacy Register Error:", err);
+    res.status(500).json({ success: false, message: 'Failed to register pharmacy' });
+  }
 });
 
 app.post('/api/auth/pharmacy-login', async (req, res) => {

@@ -18,6 +18,19 @@ const DoctorRegister = () => {
       return;
     }
     
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        alert('Please enter a valid email address');
+        return;
+      }
+    }
+
+    if (password.length < 8) {
+      alert('Password is too weak. It must be at least 8 characters long.');
+      return;
+    }
+    
     setLoading(true);
     const API_URL = import.meta.env.VITE_API_URL || 'https://ruralcarex.onrender.com';
     try {
@@ -130,8 +143,13 @@ const DoctorRegister = () => {
             />
           </div>
           <div>
-            <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>
-              Password
+            <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block', display: 'flex', justifyContent: 'space-between' }}>
+              <span>Password</span>
+              {password.length > 0 && (
+                <span style={{ color: password.length >= 8 ? '#10B981' : '#F43F5E' }}>
+                  {password.length >= 8 ? 'Strong' : 'Weak (min 8 chars)'}
+                </span>
+              )}
             </label>
             <input 
               type="password"
@@ -141,6 +159,7 @@ const DoctorRegister = () => {
               style={{ 
                 width: '100%', padding: '16px', borderRadius: '12px',
                 background: 'rgba(0,0,0,0.2)', border: '1px solid var(--surface-border)',
+                borderColor: password.length > 0 && password.length < 8 ? '#F43F5E' : 'var(--surface-border)',
                 color: 'white', fontSize: '1rem', outline: 'none'
               }}
               required
