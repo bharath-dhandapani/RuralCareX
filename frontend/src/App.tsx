@@ -42,9 +42,17 @@ function Layout({ children }: { children: React.ReactNode }) {
     const role = localStorage.getItem('role');
     const doctorId = localStorage.getItem('doctorId');
     
-    if (role === 'doctor' && doctorId) {
-      socket.emit('register', { role: 'doctor', id: doctorId });
+    const registerDoctor = () => {
+      if (role === 'doctor' && doctorId) {
+        socket.emit('register', { role: 'doctor', id: doctorId });
+      }
+    };
+
+    // Register immediately if already connected, otherwise wait for connect
+    if (socket.connected) {
+      registerDoctor();
     }
+    socket.on('connect', registerDoctor);
 
     const handleIncomingCall = (data: { patientName: string; roomId: string }) => {
       setIncomingCall(data);
@@ -52,6 +60,7 @@ function Layout({ children }: { children: React.ReactNode }) {
 
     socket.on('incoming-call', handleIncomingCall);
     return () => {
+      socket.off('connect', registerDoctor);
       socket.off('incoming-call', handleIncomingCall);
     };
   }, []);
