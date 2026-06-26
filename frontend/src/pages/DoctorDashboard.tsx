@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Activity, Search, Calendar, User, Video, LogOut, CheckCircle, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { socket } from '../socket';
 
 const DoctorDashboard = () => {
   const navigate = useNavigate();
@@ -30,6 +31,14 @@ const DoctorDashboard = () => {
     }
     fetchAppointments();
     fetchDoctorProfile();
+
+    const registerDoc = () => {
+      socket.emit('register', { role: 'doctor', id: parsedId.toString() });
+    };
+    if (socket.connected) registerDoc();
+    socket.on('connect', registerDoc);
+
+    return () => socket.off('connect', registerDoc);
   }, []);
 
   const fetchDoctorProfile = async () => {
