@@ -2,6 +2,12 @@
 
 RuralCareX is a comprehensive telemedicine and healthcare management platform designed to bridge the gap between patients in rural areas and healthcare professionals. The platform provides a seamless digital healthcare ecosystem connecting Patients, Doctors, and Pharmacies.
 
+## 🔗 Live Demo Links
+
+- **Patient Portal:** [https://rural-care-x-rust.vercel.app/login](https://rural-care-x-rust.vercel.app/login)
+- **Doctor Portal:** [https://rural-care-x-rust.vercel.app/doctor-login](https://rural-care-x-rust.vercel.app/doctor-login)
+- **Pharmacy Portal:** [https://rural-care-x-rust.vercel.app/pharmacy-login](https://rural-care-x-rust.vercel.app/pharmacy-login)
+
 ## ✨ Key Features
 
 - **Role-Based Access Control:** Distinct interfaces and functionalities for Patients, Doctors, and Pharmacies.
