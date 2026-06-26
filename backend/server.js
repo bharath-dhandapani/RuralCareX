@@ -824,8 +824,28 @@ app.put('/api/profile/:role/:id', async (req, res) => {
 // ---------------------------
 // WEBRTC SIGNALING (SOCKET.IO)
 // ---------------------------
+const doctorSockets = new Map();
+
 io.on('connection', (socket) => {
   console.log('User connected to WebRTC socket:', socket.id);
+
+  socket.on('register', (data) => {
+    if (data.role === 'doctor' && data.id) {
+      doctorSockets.set(data.id.toString(), socket.id);
+      console.log(`Doctor ${data.id} registered socket ${socket.id}`);
+    }
+  });
+
+  socket.on('call-doctor', (data) => {
+    // data: { doctorId, patientName, roomId }
+    const docSocketId = doctorSockets.get(data.doctorId.toString());
+    if (docSocketId) {
+      io.to(docSocketId).emit('incoming-call', data);
+      console.log(`Routing call from ${data.patientName} to Doctor ${data.doctorId}`);
+    } else {
+      console.log(`Doctor ${data.doctorId} is not currently online to receive the call.`);
+    }
+  });
 
   socket.on('join-room', (roomId) => {
     socket.join(roomId);
@@ -850,6 +870,14 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
+    // Remove doctor from map if disconnected
+    for (let [doctorId, socketId] of doctorSockets.entries()) {
+      if (socketId === socket.id) {
+        doctorSockets.delete(doctorId);
+        console.log(`Doctor ${doctorId} disconnected and removed from mapping`);
+        break;
+      }
+    }
   });
 });
 

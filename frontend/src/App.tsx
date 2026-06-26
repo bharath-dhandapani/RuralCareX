@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { socket } from './socket';
 import { Home, Stethoscope, FileText, User, Activity, Package, Sun, Moon } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import SymptomChecker from './pages/SymptomChecker';
@@ -34,6 +35,33 @@ const ProtectedRoute = ({ children, allowedRole = 'patient' }: { children: JSX.E
 
 function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [incomingCall, setIncomingCall] = useState<{ patientName: string; roomId: string } | null>(null);
+
+  useEffect(() => {
+    const role = localStorage.getItem('role');
+    const doctorId = localStorage.getItem('doctorId');
+    
+    if (role === 'doctor' && doctorId) {
+      socket.emit('register', { role: 'doctor', id: doctorId });
+    }
+
+    const handleIncomingCall = (data: { patientName: string; roomId: string }) => {
+      setIncomingCall(data);
+    };
+
+    socket.on('incoming-call', handleIncomingCall);
+    return () => {
+      socket.off('incoming-call', handleIncomingCall);
+    };
+  }, []);
+
+  const acceptCall = () => {
+    if (incomingCall) {
+      navigate(`/doctor/call?room=${incomingCall.roomId}`);
+      setIncomingCall(null);
+    }
+  };
   
   // Hide nav on login pages
   const authPaths = ['/login', '/register', '/doctor-login', '/doctor-register', '/pharmacy-login', '/pharmacy-register'];
@@ -68,6 +96,27 @@ function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      {incomingCall && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="glass-card animate-scale-in" style={{ padding: '32px', textAlign: 'center', maxWidth: '90%', width: '350px', background: 'rgba(30, 41, 59, 0.95)' }}>
+            <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px auto', animation: 'pulse 2s infinite' }}>
+              <User size={40} color="#10B981" />
+            </div>
+            <h2 style={{ color: 'white', margin: 0, fontSize: '1.5rem' }}>Incoming Call</h2>
+            <p style={{ color: 'var(--text-secondary)', marginTop: '8px', fontSize: '1.1rem' }}>
+              <span style={{ color: 'white', fontWeight: 600 }}>{incomingCall.patientName}</span> is calling you...
+            </p>
+            <div style={{ display: 'flex', gap: '16px', marginTop: '32px' }}>
+              <button className="btn-secondary" onClick={() => setIncomingCall(null)} style={{ flex: 1, background: 'rgba(239, 68, 68, 0.2)', color: '#EF4444', border: '1px solid rgba(239, 68, 68, 0.5)' }}>
+                Decline
+              </button>
+              <button className="btn-primary" onClick={acceptCall} style={{ flex: 1, background: '#10B981', color: 'white' }}>
+                Accept
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <main style={{ flex: 1, paddingBottom: '80px', height: '100%', overflowY: 'auto' }}>
         <div className="app-container">
           {children}

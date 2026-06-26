@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Video, Phone, Star, PhoneOff, Send } from 'lucide-react';
+import { ArrowLeft, Video, Phone, Star, PhoneOff, Send, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import io from 'socket.io-client';
+import { socket } from '../socket';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://ruralcarex.onrender.com';
-const socket = io(API_URL);
 
 const Consultations = () => {
   const navigate = useNavigate();
@@ -207,6 +206,12 @@ const Consultations = () => {
       // Just join the room. First person waits, second person joining triggers 'user-connected' for the first person.
       socket.emit('join-room', room);
       setDebugStatus("Waiting for other person to join...");
+
+      // If patient initiated the call (not via existing room ID), ring the doctor
+      if (!isRoomName && localStorage.getItem('role') !== 'doctor') {
+        const patientName = localStorage.getItem('name') || 'A Patient';
+        socket.emit('call-doctor', { doctorId: idToCall, patientName, roomId: room });
+      }
       
     } catch (err) {
       console.error("Error accessing media devices.", err);
@@ -341,8 +346,8 @@ const Consultations = () => {
           {doctors.map((doc, idx) => (
             <div key={idx} className={`glass-card animate-slide-up delay-${idx + 1}`} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'var(--surface-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${doc.name}`} alt={doc.name} style={{ width: '100%', height: '100%', borderRadius: '50%' }} />
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <User size={30} color="#10B981" />
                 </div>
                 <div style={{ flex: 1 }}>
                   <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>{doc.name}</h3>
