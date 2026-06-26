@@ -22,6 +22,7 @@ const Consultations = () => {
   const [messages, setMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const chatContainerRef = useRef(null);
+  const [debugStatus, setDebugStatus] = useState("Waiting for camera...");
   
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
@@ -40,18 +41,28 @@ const Consultations = () => {
 
     // WebRTC Signaling handlers
     socket.on('user-connected', async () => {
-      if (!peerConnectionRef.current) return;
+      setDebugStatus("Peer connected! Creating offer...");
+      if (!peerConnectionRef.current) {
+        setDebugStatus("Error: PeerConnection not ready when peer joined");
+        return;
+      }
       try {
         const offer = await peerConnectionRef.current.createOffer();
         await peerConnectionRef.current.setLocalDescription(offer);
         socket.emit('offer', { roomId: roomRef.current, sdp: offer });
+        setDebugStatus("Offer sent. Waiting for answer...");
       } catch (err) {
+        setDebugStatus(`Error creating offer: ${err.message}`);
         console.error("Error creating offer:", err);
       }
     });
 
     socket.on('offer', async (data) => {
-      if (!peerConnectionRef.current) return;
+      setDebugStatus("Offer received! Sending answer...");
+      if (!peerConnectionRef.current) {
+        setDebugStatus("Error: PeerConnection not ready when offer arrived");
+        return;
+      }
       try {
         await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.sdp));
         // Flush ICE queue
@@ -63,19 +74,26 @@ const Consultations = () => {
         const answer = await peerConnectionRef.current.createAnswer();
         await peerConnectionRef.current.setLocalDescription(answer);
         socket.emit('answer', { roomId: data.roomId, sdp: answer });
+        setDebugStatus("Answer sent! Establishing connection...");
       } catch (err) {
+        setDebugStatus(`Error handling offer: ${err.message}`);
         console.error("Error handling offer:", err);
       }
     });
 
     socket.on('answer', async (data) => {
+      setDebugStatus("Answer received! Establishing connection...");
       if (peerConnectionRef.current) {
-        await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.sdp));
-        // Flush ICE queue
-        iceCandidateQueue.current.forEach(async (c) => {
-          try { await peerConnectionRef.current.addIceCandidate(c); } catch(e) {}
-        });
-        iceCandidateQueue.current = [];
+        try {
+          await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.sdp));
+          // Flush ICE queue
+          iceCandidateQueue.current.forEach(async (c) => {
+            try { await peerConnectionRef.current.addIceCandidate(c); } catch(e) {}
+          });
+          iceCandidateQueue.current = [];
+        } catch (err) {
+          setDebugStatus(`Error setting answer: ${err.message}`);
+        }
       }
     });
 
@@ -154,6 +172,7 @@ const Consultations = () => {
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
       }
+      setDebugStatus("Camera ready. Joining virtual room...");
 
       // Setup Peer Connection
       const configuration = { 
@@ -168,9 +187,15 @@ const Consultations = () => {
       stream.getTracks().forEach(track => pc.addTrack(track, stream));
 
       pc.ontrack = (event) => {
+        setDebugStatus("Connected! Video track received.");
         if (remoteVideoRef.current && event.streams[0]) {
           remoteVideoRef.current.srcObject = event.streams[0];
+          remoteVideoRef.current.play().catch(e => console.error("Play error:", e));
         }
+      };
+
+      pc.oniceconnectionstatechange = () => {
+        setDebugStatus(`Connection state: ${pc.iceConnectionState}`);
       };
 
       pc.onicecandidate = (event) => {
@@ -181,6 +206,7 @@ const Consultations = () => {
 
       // Just join the room. First person waits, second person joining triggers 'user-connected' for the first person.
       socket.emit('join-room', room);
+      setDebugStatus("Waiting for other person to join...");
       
     } catch (err) {
       console.error("Error accessing media devices.", err);
@@ -225,11 +251,16 @@ const Consultations = () => {
         <video ref={remoteVideoRef} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute' }} />
         
         {/* Header Overlay */}
-        <div style={{ position: 'absolute', top: 0, width: '100%', padding: '20px', background: 'linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)', zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ color: 'white', margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{'Consult Doctor'}</h3>
-          <button onClick={endCall} style={{ background: '#EF4444', color: 'white', border: 'none', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <PhoneOff size={20} />
-          </button>
+        <div style={{ position: 'absolute', top: 0, width: '100%', padding: '20px', background: 'linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ color: 'white', margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{'Consult Doctor'}</h3>
+            <button onClick={endCall} style={{ background: '#EF4444', color: 'white', border: 'none', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <PhoneOff size={20} />
+            </button>
+          </div>
+          <div style={{ background: 'rgba(0,0,0,0.5)', padding: '6px 12px', borderRadius: '12px', color: '#10B981', fontSize: '0.8rem', fontWeight: 600 }}>
+            {debugStatus}
+          </div>
         </div>
 
         {/* Local Video PIP */}
