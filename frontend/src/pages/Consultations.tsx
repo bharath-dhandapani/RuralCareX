@@ -27,6 +27,7 @@ const Consultations = () => {
   const remoteVideoRef = useRef(null);
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
+  const iceCandidateQueue = useRef([]);
 
   useEffect(() => {
     // Fetch real doctors from backend
@@ -53,6 +54,12 @@ const Consultations = () => {
       if (!peerConnectionRef.current) return;
       try {
         await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        // Flush ICE queue
+        iceCandidateQueue.current.forEach(async (c) => {
+          try { await peerConnectionRef.current.addIceCandidate(c); } catch(e) {}
+        });
+        iceCandidateQueue.current = [];
+
         const answer = await peerConnectionRef.current.createAnswer();
         await peerConnectionRef.current.setLocalDescription(answer);
         socket.emit('answer', { roomId: data.roomId, sdp: answer });
@@ -64,13 +71,23 @@ const Consultations = () => {
     socket.on('answer', async (data) => {
       if (peerConnectionRef.current) {
         await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        // Flush ICE queue
+        iceCandidateQueue.current.forEach(async (c) => {
+          try { await peerConnectionRef.current.addIceCandidate(c); } catch(e) {}
+        });
+        iceCandidateQueue.current = [];
       }
     });
 
     socket.on('ice-candidate', async (data) => {
       if (peerConnectionRef.current && data.candidate) {
         try {
-          await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(data.candidate));
+          const candidate = new RTCIceCandidate(data.candidate);
+          if (peerConnectionRef.current.remoteDescription && peerConnectionRef.current.remoteDescription.type) {
+            await peerConnectionRef.current.addIceCandidate(candidate);
+          } else {
+            iceCandidateQueue.current.push(candidate);
+          }
         } catch (e) {
           console.error("Error adding ice candidate", e);
         }
@@ -139,7 +156,12 @@ const Consultations = () => {
       }
 
       // Setup Peer Connection
-      const configuration = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+      const configuration = { 
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:global.stun.twilio.com:3478' }
+        ] 
+      };
       const pc = new RTCPeerConnection(configuration);
       peerConnectionRef.current = pc;
 
