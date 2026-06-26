@@ -8,10 +8,18 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://ruralcarex.onrender.com
 const Consultations = () => {
   const navigate = useNavigate();
   const location = useLocation();
-    const queryParams = new URLSearchParams(location.search);
+  const queryParams = new URLSearchParams(location.search);
   const urlRoom = queryParams.get('Room') || queryParams.get('room');
+  const urlPatientId = queryParams.get('patientId');
 
   const [doctors, setDoctors] = useState([]);
+  const [showPostCallModal, setShowPostCallModal] = useState(false);
+  const [notes, setNotes] = useState('');
+  const [medicineName, setMedicineName] = useState('');
+  const [morning, setMorning] = useState('');
+  const [afternoon, setAfternoon] = useState('');
+  const [night, setNight] = useState('');
+  const [days, setDays] = useState('');
   const [inCall, setInCall] = useState(false);
   const [roomId, setRoomId] = useState('');
   const roomRef = useRef('');
@@ -210,7 +218,8 @@ const Consultations = () => {
       // If patient initiated the call (not via existing room ID), ring the doctor
       if (!isRoomName && localStorage.getItem('role') !== 'doctor') {
         const patientName = localStorage.getItem('name') || 'A Patient';
-        socket.emit('call-doctor', { doctorId: idToCall, patientName, roomId: room });
+        const patientId = localStorage.getItem('userId');
+        socket.emit('call-doctor', { doctorId: idToCall, patientId, patientName, roomId: room });
       }
       
     } catch (err) {
@@ -227,12 +236,44 @@ const Consultations = () => {
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close();
     }
-    setInCall(false);
-    setRoomId('');
     
-    // Clear URL query param if it exists so it doesn't auto-join again
-    if (urlRoom) {
-      navigate('/consultations', { replace: true });
+    const role = localStorage.getItem('role');
+    if (role === 'doctor' && urlPatientId) {
+      setShowPostCallModal(true);
+    } else {
+      setInCall(false);
+      setRoomId('');
+      if (urlRoom) {
+        navigate(role === 'doctor' ? '/doctor/dashboard' : '/consultations', { replace: true });
+      }
+    }
+  };
+
+  const handleSaveConsultation = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`${API_URL}/api/doctor/consultation/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          doctorId: localStorage.getItem('doctorId'),
+          patientId: urlPatientId,
+          notes, medicineName, morning, afternoon, night, days
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Consultation saved successfully');
+        setShowPostCallModal(false);
+        setInCall(false);
+        setRoomId('');
+        navigate('/doctor/dashboard', { replace: true });
+      } else {
+        alert(data.message || 'Failed to save consultation');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error saving consultation');
     }
   };
 
@@ -267,6 +308,40 @@ const Consultations = () => {
             {debugStatus}
           </div>
         </div>
+
+        {/* Post Consultation Modal */}
+        {showPostCallModal && (
+          <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, background: 'rgba(15, 23, 42, 0.95)', zIndex: 100, padding: '24px', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+            <h2 style={{ color: 'white', margin: '0 0 16px 0', fontSize: '1.5rem' }}>Post-Consultation</h2>
+            <form onSubmit={handleSaveConsultation} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.9rem' }}>Clinical Notes</label>
+                <textarea 
+                  value={notes} onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Patient reports..."
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', resize: 'vertical', minHeight: '80px' }}
+                />
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.05)', padding: '16px', borderRadius: '12px' }}>
+                <h3 style={{ margin: '0 0 12px 0', fontSize: '1rem', color: 'var(--primary-light)' }}>Prescription (Optional)</h3>
+                <input 
+                  type="text" placeholder="Medicine Name" value={medicineName} onChange={(e) => setMedicineName(e.target.value)}
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', marginBottom: '12px' }}
+                />
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                  <input type="number" placeholder="M" value={morning} onChange={(e) => setMorning(e.target.value)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }} />
+                  <input type="number" placeholder="A" value={afternoon} onChange={(e) => setAfternoon(e.target.value)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }} />
+                  <input type="number" placeholder="N" value={night} onChange={(e) => setNight(e.target.value)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }} />
+                </div>
+                <input 
+                  type="number" placeholder="Duration (Days)" value={days} onChange={(e) => setDays(e.target.value)}
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+                />
+              </div>
+              <button type="submit" className="btn-primary" style={{ background: 'var(--secondary)', marginTop: '8px', padding: '16px' }}>Save & Complete</button>
+            </form>
+          </div>
+        )}
 
         {/* Local Video PIP */}
         <video ref={localVideoRef} autoPlay playsInline muted style={{ 

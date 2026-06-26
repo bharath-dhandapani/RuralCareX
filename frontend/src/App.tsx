@@ -36,7 +36,7 @@ const ProtectedRoute = ({ children, allowedRole = 'patient' }: { children: JSX.E
 function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [incomingCall, setIncomingCall] = useState<{ patientName: string; roomId: string } | null>(null);
+  const [incomingCall, setIncomingCall] = useState<{ patientId: string; patientName: string; roomId: string } | null>(null);
 
   useEffect(() => {
     const role = localStorage.getItem('role');
@@ -54,7 +54,7 @@ function Layout({ children }: { children: React.ReactNode }) {
     }
     socket.on('connect', registerDoctor);
 
-    const handleIncomingCall = (data: { patientName: string; roomId: string }) => {
+    const handleIncomingCall = (data: { patientId: string; patientName: string; roomId: string }) => {
       setIncomingCall(data);
     };
 
@@ -65,9 +65,23 @@ function Layout({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    let title = 'RuralCareX';
+    if (location.pathname.startsWith('/doctor')) {
+      title = 'Doctor Portal - RuralCareX';
+    } else if (location.pathname.startsWith('/pharmacy')) {
+      title = 'Pharmacy Portal - RuralCareX';
+    } else if (['/login', '/register'].includes(location.pathname)) {
+      title = 'Patient Login - RuralCareX';
+    } else if (location.pathname === '/' || location.pathname.startsWith('/consultations') || location.pathname.startsWith('/records') || location.pathname.startsWith('/medicines') || location.pathname.startsWith('/symptom')) {
+      title = 'Patient Dashboard - RuralCareX';
+    }
+    document.title = title;
+  }, [location.pathname]);
+
   const acceptCall = () => {
     if (incomingCall) {
-      navigate(`/doctor/call?room=${incomingCall.roomId}`);
+      navigate(`/doctor/call?room=${incomingCall.roomId}&patientId=${incomingCall.patientId}`);
       setIncomingCall(null);
     }
   };

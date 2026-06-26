@@ -511,6 +511,43 @@ app.post('/api/doctor/prescribe', async (req, res) => {
   }
 });
 
+// Doctor completes instant consultation with notes & prescription
+app.post('/api/doctor/consultation/complete', async (req, res) => {
+  const { doctorId, patientId, notes, medicineName, morning, afternoon, night, days } = req.body;
+  try {
+    const doctor = await prisma.doctor.findUnique({ where: { id: parseInt(doctorId) } });
+    
+    // Create Record (Consultation Notes)
+    const record = await prisma.record.create({
+      data: {
+        userId: parseInt(patientId),
+        type: 'Video Consultation',
+        doctor: doctor.name,
+        notes: notes || 'Consultation completed successfully.'
+      }
+    });
+
+    // Create Prescription if medicine provided
+    if (medicineName) {
+      await prisma.prescription.create({
+        data: {
+          userId: parseInt(patientId),
+          doctorId: parseInt(doctorId),
+          medicineName,
+          morning: parseInt(morning) || 0,
+          afternoon: parseInt(afternoon) || 0,
+          night: parseInt(night) || 0,
+          days: parseInt(days) || 1,
+        }
+      });
+    }
+
+    res.status(200).json({ success: true, record });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // Get patient notifications
 app.get('/api/patient/:id/notifications', async (req, res) => {
   const id = parseInt(req.params.id);
