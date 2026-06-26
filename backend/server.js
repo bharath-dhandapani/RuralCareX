@@ -693,6 +693,12 @@ app.post('/api/pharmacy/dispense', async (req, res) => {
           status: 'out_of_stock'
         }
       });
+      await prisma.notification.create({
+        data: {
+          userId: parseInt(userId),
+          message: `Notice: Your prescription for ${medicineName} is currently OUT OF STOCK at ${purchasedAt || 'the pharmacy'}. We will notify you as soon as it is restocked.`
+        }
+      });
       return res.status(400).json({ success: false, message: 'Not enough stock! Added to Active Prescriptions as OUT OF STOCK. Patient will be notified when restocked.' });
     }
     
@@ -743,6 +749,12 @@ app.post('/api/pharmacy/dispense-prescription', async (req, res) => {
       await prisma.prescription.update({
         where: { id: prescription.id },
         data: { status: 'out_of_stock' }
+      });
+      await prisma.notification.create({
+        data: {
+          userId: prescription.userId,
+          message: `Notice: Your prescription for ${prescription.medicineName} is currently OUT OF STOCK at ${pharmacyName || 'the pharmacy'}. We will notify you as soon as it is restocked.`
+        }
       });
       return res.status(400).json({ success: false, message: 'Not enough stock! Marked as OUT OF STOCK.' });
     }
