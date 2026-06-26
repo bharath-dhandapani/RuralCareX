@@ -457,9 +457,9 @@ const Consultations = () => {
             {debugStatus}
           </div>
         </div>
-          <>
-            {/* Local Video PIP */}
-            <video ref={localVideoRef} autoPlay playsInline muted style={{ 
+
+        {/* Local Video PIP */}
+        <video ref={localVideoRef} autoPlay playsInline muted style={{ 
               position: 'absolute', top: '80px', right: '20px', 
           width: '90px', height: '130px', objectFit: 'cover', 
           borderRadius: '12px', border: '2px solid white', zIndex: 10,
