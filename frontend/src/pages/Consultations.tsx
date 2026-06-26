@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Video, Phone, Star, PhoneOff, Send, User } from 'lucide-react';
+import { ArrowLeft, Video, Phone, Star, PhoneOff, Send, User, Camera } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { socket } from '../socket';
 
@@ -23,6 +23,7 @@ const Consultations = () => {
   const [bookingDoctorId, setBookingDoctorId] = useState(null);
   const [bookingDate, setBookingDate] = useState('');
   const [bookingTime, setBookingTime] = useState('');
+  const [facingMode, setFacingMode] = useState('user');
 
   const [inCall, setInCall] = useState(false);
   const [roomId, setRoomId] = useState('');
@@ -185,7 +186,10 @@ const Consultations = () => {
 
     // Get Local Media
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode }, 
+        audio: true 
+      });
       localStreamRef.current = stream;
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
@@ -282,6 +286,42 @@ const Consultations = () => {
     }
   };
 
+  const toggleCamera = async () => {
+    if (!localStreamRef.current || !peerConnectionRef.current) return;
+    
+    const newMode = facingMode === 'user' ? 'environment' : 'user';
+    setFacingMode(newMode);
+    
+    try {
+      // Get new stream
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: newMode }
+      });
+      
+      const newVideoTrack = newStream.getVideoTracks()[0];
+      const oldVideoTrack = localStreamRef.current.getVideoTracks()[0];
+      
+      if (oldVideoTrack) {
+        oldVideoTrack.stop();
+        localStreamRef.current.removeTrack(oldVideoTrack);
+      }
+      
+      localStreamRef.current.addTrack(newVideoTrack);
+      
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = localStreamRef.current;
+      }
+      
+      const sender = peerConnectionRef.current.getSenders().find(s => s.track.kind === 'video');
+      if (sender) {
+        sender.replaceTrack(newVideoTrack);
+      }
+    } catch (err) {
+      console.error("Failed to switch camera:", err);
+      alert("Could not switch camera.");
+    }
+  };
+
   const handleSaveConsultation = async (e) => {
     e.preventDefault();
     try {
@@ -333,9 +373,16 @@ const Consultations = () => {
         <div style={{ position: 'absolute', top: 0, width: '100%', padding: '20px', background: 'linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ color: 'white', margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{'Consult Doctor'}</h3>
-            <button onClick={endCall} style={{ background: '#EF4444', color: 'white', border: 'none', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <PhoneOff size={20} />
-            </button>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              {localStorage.getItem('role') !== 'doctor' && (
+                <button onClick={toggleCamera} style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: 'none', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Camera size={20} />
+                </button>
+              )}
+              <button onClick={endCall} style={{ background: '#EF4444', color: 'white', border: 'none', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <PhoneOff size={20} />
+              </button>
+            </div>
           </div>
           <div style={{ background: 'rgba(0,0,0,0.5)', padding: '6px 12px', borderRadius: '12px', color: '#10B981', fontSize: '0.8rem', fontWeight: 600 }}>
             {debugStatus}
