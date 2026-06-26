@@ -377,6 +377,55 @@ const Consultations = () => {
   };
 
   if (inCall) {
+    if (showPostCallModal) {
+      return (
+        <div style={{ 
+          position: 'fixed', top: 0, bottom: 0, left: 0, right: 0, 
+          background: 'rgba(15, 23, 42, 0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+          zIndex: 1000, padding: '20px'
+        }}>
+          <div style={{ 
+            width: '100%', maxWidth: '500px', padding: '32px', borderRadius: '24px', 
+            maxHeight: '90vh', overflowY: 'auto', 
+            background: 'rgba(30, 41, 59, 0.85)', 
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+          }}>
+            <h2 style={{ color: 'white', margin: '0 0 24px 0', fontSize: '1.8rem', textAlign: 'center' }}>Post-Consultation</h2>
+            <form onSubmit={handleSaveConsultation} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div>
+                <label style={{ display: 'block', color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.95rem', fontWeight: 500 }}>Clinical Notes</label>
+                <textarea 
+                  value={notes} onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Enter detailed patient reports..."
+                  style={{ width: '100%', padding: '16px', borderRadius: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', resize: 'vertical', minHeight: '100px', fontSize: '1rem' }}
+                />
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', color: 'var(--primary-light)', fontWeight: 600 }}>Prescription (Optional)</h3>
+                <input 
+                  type="text" placeholder="Medicine Name (e.g. Paracetamol 500mg)" value={medicineName} onChange={(e) => setMedicineName(e.target.value)}
+                  style={{ width: '100%', padding: '14px', borderRadius: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', marginBottom: '16px', fontSize: '1rem' }}
+                />
+                <label style={{ display: 'block', color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.85rem' }}>Dosage Schedule (Morning - Afternoon - Night)</label>
+                <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+                  <input type="number" placeholder="M" value={morning} onChange={(e) => setMorning(e.target.value)} style={{ flex: 1, padding: '12px', borderRadius: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', textAlign: 'center', fontSize: '1.1rem' }} />
+                  <input type="number" placeholder="A" value={afternoon} onChange={(e) => setAfternoon(e.target.value)} style={{ flex: 1, padding: '12px', borderRadius: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', textAlign: 'center', fontSize: '1.1rem' }} />
+                  <input type="number" placeholder="N" value={night} onChange={(e) => setNight(e.target.value)} style={{ flex: 1, padding: '12px', borderRadius: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', textAlign: 'center', fontSize: '1.1rem' }} />
+                </div>
+                <input 
+                  type="number" placeholder="Duration (Days)" value={days} onChange={(e) => setDays(e.target.value)}
+                  style={{ width: '100%', padding: '14px', borderRadius: '12px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', fontSize: '1rem' }}
+                />
+              </div>
+              <button type="submit" className="btn-primary" style={{ background: 'var(--secondary)', marginTop: '12px', padding: '16px', fontSize: '1.1rem', fontWeight: 600, borderRadius: '12px' }}>Save & Complete Record</button>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div style={{ 
         position: 'fixed', top: 0, bottom: 0, left: 0, right: 0, 
@@ -405,42 +454,6 @@ const Consultations = () => {
             {debugStatus}
           </div>
         </div>
-
-        {/* Post Consultation Modal */}
-        {showPostCallModal && (
-          <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, background: 'rgba(15, 23, 42, 0.95)', zIndex: 100, padding: '24px', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-            <h2 style={{ color: 'white', margin: '0 0 16px 0', fontSize: '1.5rem' }}>Post-Consultation</h2>
-            <form onSubmit={handleSaveConsultation} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <label style={{ display: 'block', color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.9rem' }}>Clinical Notes</label>
-                <textarea 
-                  value={notes} onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Patient reports..."
-                  style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', resize: 'vertical', minHeight: '80px' }}
-                />
-              </div>
-              <div style={{ background: 'rgba(255,255,255,0.05)', padding: '16px', borderRadius: '12px' }}>
-                <h3 style={{ margin: '0 0 12px 0', fontSize: '1rem', color: 'var(--primary-light)' }}>Prescription (Optional)</h3>
-                <input 
-                  type="text" placeholder="Medicine Name" value={medicineName} onChange={(e) => setMedicineName(e.target.value)}
-                  style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', marginBottom: '12px' }}
-                />
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-                  <input type="number" placeholder="M" value={morning} onChange={(e) => setMorning(e.target.value)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }} />
-                  <input type="number" placeholder="A" value={afternoon} onChange={(e) => setAfternoon(e.target.value)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }} />
-                  <input type="number" placeholder="N" value={night} onChange={(e) => setNight(e.target.value)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }} />
-                </div>
-                <input 
-                  type="number" placeholder="Duration (Days)" value={days} onChange={(e) => setDays(e.target.value)}
-                  style={{ width: '100%', padding: '12px', borderRadius: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
-                />
-              </div>
-              <button type="submit" className="btn-primary" style={{ background: 'var(--secondary)', marginTop: '8px', padding: '16px' }}>Save & Complete</button>
-            </form>
-          </div>
-        )}
-
-        {!showPostCallModal && (
           <>
             {/* Local Video PIP */}
             <video ref={localVideoRef} autoPlay playsInline muted style={{ 
