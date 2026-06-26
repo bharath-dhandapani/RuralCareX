@@ -82,6 +82,7 @@ app.post('/api/auth/send-otp', async (req, res) => {
 app.post('/api/auth/register', async (req, res) => {
   const { name, phone, password } = req.body;
   if (!phone || !password) return res.status(400).json({ success: false, message: 'Phone and password required' });
+  if (password.length < 8) return res.status(400).json({ success: false, message: 'Password must be at least 8 characters long' });
 
   try {
     const existingUser = await prisma.user.findUnique({ where: { phone } });
@@ -124,6 +125,8 @@ app.post('/api/auth/login', async (req, res) => {
 app.post('/api/auth/doctor-register', async (req, res) => {
   const { name, specialty, phone, email, password } = req.body;
   if (!password || (!phone && !email)) return res.status(400).json({ success: false, message: 'Missing credentials' });
+  if (password.length < 8) return res.status(400).json({ success: false, message: 'Password must be at least 8 characters long' });
+  if (email && !(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) return res.status(400).json({ success: false, message: 'Invalid email address' });
 
   try {
     const existingDoctor = await prisma.doctor.findFirst({
@@ -172,6 +175,8 @@ app.post('/api/auth/doctor-login', async (req, res) => {
 app.post('/api/auth/pharmacy-register', async (req, res) => {
   const { name, phone, email, password, address } = req.body;
   if (!password || (!phone && !email)) return res.status(400).json({ success: false, message: 'Missing credentials' });
+  if (password.length < 8) return res.status(400).json({ success: false, message: 'Password must be at least 8 characters long' });
+  if (email && !(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) return res.status(400).json({ success: false, message: 'Invalid email address' });
 
   try {
     const existingPharmacy = await prisma.pharmacy.findFirst({
