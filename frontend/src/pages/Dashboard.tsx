@@ -7,7 +7,7 @@ const Dashboard = () => {
     const [medicineQuery, setMedicineQuery] = useState('');
   const [pharmacies, setPharmacies] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_URL || 'https://ruralcarex.onrender.com';
 
   const handleSearch = async (e) => {
     e.preventDefault();

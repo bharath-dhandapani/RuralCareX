@@ -5,7 +5,7 @@ import { User, LogOut, ArrowLeft, Edit2, Save, X, Phone, Mail, MapPin, Activity,
 const Profile = () => {
   const navigate = useNavigate();
   const role = localStorage.getItem('role') || 'guest';
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_URL || 'https://ruralcarex.onrender.com';
 
   // We need the ID to fetch from /api/profile/:role/:id
   let userId = localStorage.getItem('userId') || '1';

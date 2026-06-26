@@ -19,7 +19,7 @@ const DoctorRegister = () => {
     }
     
     setLoading(true);
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const API_URL = import.meta.env.VITE_API_URL || 'https://ruralcarex.onrender.com';
     try {
       const res = await fetch(`${API_URL}/api/auth/doctor-register`, {
         method: 'POST',

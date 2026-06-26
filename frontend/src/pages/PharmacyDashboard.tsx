@@ -7,7 +7,7 @@ const PharmacyDashboard = () => {
   const navigate = useNavigate();
   const pharmacyId = localStorage.getItem('pharmacyId');
   const pharmacyName = localStorage.getItem('pharmacyName') || 'Pharmacy';
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_URL || 'https://ruralcarex.onrender.com';
 
   const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6'];
 

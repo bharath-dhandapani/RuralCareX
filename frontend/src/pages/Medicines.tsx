@@ -9,7 +9,7 @@ const Medicines = () => {
   const [query, setQuery] = useState(initialQuery);
   const [medicines, setMedicines] = useState([]);
   const [loading, setLoading] = useState(false);
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_URL || 'https://ruralcarex.onrender.com';
 
   const fetchMedicines = async (searchQuery = '') => {
     setLoading(true);

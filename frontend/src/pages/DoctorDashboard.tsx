@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 const DoctorDashboard = () => {
   const navigate = useNavigate();
   const doctorId = localStorage.getItem('doctorId');
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_URL || 'https://ruralcarex.onrender.com';
 
   const [isAvailable, setIsAvailable] = useState(false);
   const [patientSearch, setPatientSearch] = useState('');

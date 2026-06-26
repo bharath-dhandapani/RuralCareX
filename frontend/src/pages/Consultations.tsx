@@ -3,7 +3,7 @@ import { ArrowLeft, Video, Phone, Star, PhoneOff, Send } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import io from 'socket.io-client';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://ruralcarex.onrender.com';
 const socket = io(API_URL);
 
 const Consultations = () => {
